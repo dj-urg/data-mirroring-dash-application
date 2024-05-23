@@ -1,8 +1,8 @@
 import os
 import logging
 from app import app, server
-from components.layout import create_layout
-from components.callbacks import register_callbacks
+from src.components.layout import create_layout
+from src.components.callbacks import register_callbacks
 
 logging.basicConfig(level=logging.INFO)
 
