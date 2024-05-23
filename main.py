@@ -1,6 +1,6 @@
 import os
 import logging
-from app import app, server
+from src.app import app, server
 from src.components.layout import create_layout
 from src.components.callbacks import register_callbacks
 
@@ -13,7 +13,8 @@ def setup_app():
     register_callbacks()
     logging.info("Setup complete")
 
+setup_app()
+
 if __name__ == "__main__":
-    setup_app()
     logging.info("Starting server")
-    server.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8051)))
+    app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8051)))
