@@ -7,9 +7,13 @@ from src.components.callbacks import register_callbacks
 logging.basicConfig(level=logging.INFO)
 
 def setup_app():
+    logging.info("Setting up app layout")
     app.layout = create_layout()
+    logging.info("Registering callbacks")
     register_callbacks()
+    logging.info("Setup complete")
 
 if __name__ == "__main__":
     setup_app()
+    logging.info("Starting server")
     server.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8051)))
