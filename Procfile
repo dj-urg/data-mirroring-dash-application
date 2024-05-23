@@ -1,1 +1,1 @@
-web: gunicorn main:app.server
+web: gunicorn data-mirroring-dash-application:server
