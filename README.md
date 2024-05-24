@@ -18,13 +18,19 @@ To run the Data Mirroring application locally, follow these steps:
 ### Installation
 
 1. Clone the repository:
+```
 git clone https://github.com/your-username/data-mirroring.git
+```
 
 2. Change into the project directory:
+```
 cd data-mirroring
+```
 
 3. Create a virtual environment:
+```
 python -m venv venv
+```
 
 4. Activate the virtual environment:
 - For Windows:
