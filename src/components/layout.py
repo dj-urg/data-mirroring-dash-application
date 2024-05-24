@@ -7,13 +7,13 @@ def create_layout():
         html.Div(style={'height': '50px'}),
 
         html.H1(
-            'Data Mirroring',
+            'Data Mirroring: Reflective and Reflexive Agency through Data Donations',
             style={
                 'textAlign': 'center', 
-                'color': '#007BFF', 
+                'color': '#1F2937', 
                 'fontFamily': 'Arial, sans-serif', 
                 'marginBottom': '20px',
-                'fontSize': '3em',
+                'fontSize': '2.5em',
                 'fontWeight': 'bold'
             }
         ),
@@ -22,24 +22,24 @@ def create_layout():
             id='platform-description',
             children=[
                 html.P([
-                    "Welcome to the Data Mirroring website! Developed by Daniel Jurg, Sarah Vis, and Ike Picone at the University of Brussels, Data Mirroring seeks to help users reflect on their social media usage through data visualization. "
-                    "This application serves as a preliminary step to transform Data Download Packages (DDPs), as provided by social media platforms like TikTok and Instagram, into a more readable form. Rather than donating entire DDPs, this application provides the user insight into what they are donating and strips any sensitive personal information out of the DDP. Your data is processed in real-time, ensuring that personal information is never stored on any server. "
-                    "This platform is designed to work with the 4CAT: Capture and Analysis Toolkit, enhancing the analysis of social media data. For more information, visit our ",
+                    "Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the University of Brussels. This project aims to facilitate user reflection on social media usage through data visualization. "
+                    "The application transforms Data Download Packages (DDPs) provided by social media platforms like TikTok and Instagram into a more readable format. By processing a subset of the DDP, the application offers users insights into their data while ensuring the removal of sensitive personal information. Data processing occurs in real-time, guaranteeing that personal information is never stored on any server. "
+                    "Data Mirroring is designed to integrate with the 4CAT: Capture and Analysis Toolkit, enhancing the analysis of social media data. For more information about the project, please visit our ",
                     html.A("GitHub repository", href="https://github.com/dj-urg/data-mirroring-overview", target='_blank'),
                     "."
                 ], style={
-                    'textAlign': 'center', 
-                    'color': 'black', 
+                    'textAlign': 'justify', 
+                    'color': '#4B5563', 
                     'fontFamily': 'Arial, sans-serif', 
-                    'fontSize': '1.2em', 
+                    'fontSize': '1.1em', 
                     'lineHeight': '1.6'
                 }),
             ],
             style={
                 'margin': 'auto', 
                 'maxWidth': '800px', 
-                'padding': '20px', 
-                'backgroundColor': '#f9f9f9', 
+                'padding': '30px', 
+                'backgroundColor': '#F9FAFB', 
                 'borderRadius': '10px', 
                 'boxShadow': '0px 0px 10px rgba(0, 0, 0, 0.1)'
             }
@@ -48,11 +48,11 @@ def create_layout():
         html.Div(
             [
                 html.H2(
-                    'Select from which platform you requested your data',
+                    'Select the social media platform',
                     style={
                         'textAlign': 'center',
                         'fontFamily': 'Arial, sans-serif',
-                        'color': '#333',
+                        'color': '#1F2937',
                         'marginTop': '40px'
                     }
                 ),
@@ -66,7 +66,7 @@ def create_layout():
                     style={
                         'textAlign': 'center', 
                         'fontFamily': 'Arial, sans-serif',
-                        'color': '#333'
+                        'color': '#4B5563'
                     }
                 )
             ],
@@ -77,16 +77,16 @@ def create_layout():
 
         html.Div(
             id='output-data-upload',
-            className='table-container',  # Apply the CSS class here
+            className='table-container',
             style={
                 'marginTop': '40px',
-                'padding': '20px',
-                'backgroundColor': '#f9f9f9',
+                'padding': '30px',
+                'backgroundColor': '#F9FAFB',
                 'borderRadius': '10px',
                 'boxShadow': '0px 0px 10px rgba(0, 0, 0, 0.1)',
                 'maxWidth': '800px',
                 'margin': 'auto',
-                'color': 'black'
+                'color': '#1F2937'
             }
         ),
 
@@ -95,4 +95,4 @@ def create_layout():
         dcc.Download(id="download-urls-txt"),
 
         html.Div(id='visualization-container', style={'marginTop': '40px'})
-    ], style={'backgroundColor': 'white', 'color': 'black', 'padding': '20px'})
+    ], style={'backgroundColor': '#FFFFFF', 'color': '#1F2937', 'padding': '30px'})
