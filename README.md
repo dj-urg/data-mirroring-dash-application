@@ -1,6 +1,6 @@
 # data-mirroring-dash-application
 
-Welcome to the Data Mirroring research project application. This tool transforms Data Download Packages (DDPs) provided by social media platforms like TikTok and Instagram into a more readable format. By processing a subset of the DDP, the application offers users insights into their data while ensuring the removal of sensitive personal information. Data processing occurs in real-time, guaranteeing that personal information is never stored on any server. The tool is designed to integrate with the 4CAT: Capture and Analysis Toolkit, enhancing the analysis of social media data.
+Welcome to the Data Mirroring research project Dash application. This tool transforms Data Download Packages (DDPs) provided by social media platforms like TikTok and Instagram into a more readable format. By processing a subset of the DDP, the application offers users insights into their data while ensuring the removal of sensitive personal information. Data processing occurs in real-time, guaranteeing that personal information is never stored on any server. The tool is designed to integrate with the 4CAT: Capture and Analysis Toolkit, enhancing the analysis of social media data.
 
 ## Live Demo
 
