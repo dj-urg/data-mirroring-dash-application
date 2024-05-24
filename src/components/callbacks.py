@@ -171,9 +171,9 @@ def register_callbacks():
         description = None
         if selected_platform == 'instagram':
             description = html.P(
-                "You can upload the following files for Instagram: saved_posts.json, liked_posts.json, posts_viewed.json, suggested_accounts_viewed.json, videos_watched.json.",
+                "You can upload the following files for Instagram: saved_posts.json, liked_posts.json, posts_viewed.json, suggested_accounts_viewed.json, videos_watched.json. You can upload one file or select multiple files at the same time.",
                 style={
-                    'textAlign': 'justify',
+                    'textAlign': 'center',
                     'color': '#4B5563',
                     'fontFamily': 'Arial, sans-serif',
                     'fontSize': '1.1em',
@@ -184,9 +184,9 @@ def register_callbacks():
             )
         elif selected_platform == 'tiktok':
             description = html.P(
-                "You can upload the user_data.json file for TikTok.",
+                "You can upload the user_data.json file for TikTok. The application will only extract engagement (browsing, liking, and/or favoriting) with TikTok videos (URLs) and discard any other information.",
                 style={
-                    'textAlign': 'justify',
+                    'textAlign': 'center',
                     'color': '#4B5563',
                     'fontFamily': 'Arial, sans-serif',
                     'fontSize': '1.1em',
