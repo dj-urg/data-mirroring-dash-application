@@ -4,7 +4,7 @@ Welcome to the Data Mirroring research project application. This tool transforms
 
 ## Live Demo
 
-The Data Mirroring application is currently deployed on Heroku. You can access the live demo [here](https://your-app-url.herokuapp.com).
+The Data Mirroring application is currently deployed on Heroku. You can access the live demo [here]([https://your-app-url.herokuapp.com](https://data-mirroring-b65b623911e5.herokuapp.com/)).
 
 ## Getting Started
 
