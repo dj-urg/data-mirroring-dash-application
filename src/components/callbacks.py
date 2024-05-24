@@ -168,18 +168,33 @@ def register_callbacks():
             )
         ])
         
-        description = html.P(
-            "You can upload the following files for Instagram: saved_posts.json, liked_posts.json, posts_viewed.json, suggested_accounts_viewed.json, videos_watched.json.",
-            style={
-                'textAlign': 'justify',
-                'color': '#4B5563',
-                'fontFamily': 'Arial, sans-serif',
-                'fontSize': '1.1em',
-                'lineHeight': '1.6',
-                'marginTop': '20px',
-                'marginBottom': '20px'
-            }
-        ) if selected_platform == 'instagram' else None
+        description = None
+        if selected_platform == 'instagram':
+            description = html.P(
+                "You can upload the following files for Instagram: saved_posts.json, liked_posts.json, posts_viewed.json, suggested_accounts_viewed.json, videos_watched.json.",
+                style={
+                    'textAlign': 'justify',
+                    'color': '#4B5563',
+                    'fontFamily': 'Arial, sans-serif',
+                    'fontSize': '1.1em',
+                    'lineHeight': '1.6',
+                    'marginTop': '20px',
+                    'marginBottom': '20px'
+                }
+            )
+        elif selected_platform == 'tiktok':
+            description = html.P(
+                "You can upload the user_data.json file for TikTok.",
+                style={
+                    'textAlign': 'justify',
+                    'color': '#4B5563',
+                    'fontFamily': 'Arial, sans-serif',
+                    'fontSize': '1.1em',
+                    'lineHeight': '1.6',
+                    'marginTop': '20px',
+                    'marginBottom': '20px'
+                }
+            )
 
         return html.Div([
             upload_component,
