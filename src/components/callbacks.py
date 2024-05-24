@@ -4,8 +4,6 @@ from dash.dependencies import ALL
 from dash.exceptions import PreventUpdate
 from app import app
 import pandas as pd
-import base64
-import io
 from src.components.data.insta_processing import parse_json, create_engagement_graph
 from src.components.data.tiktok_processing import parse_tiktok_contents, extract_urls_for_4cat, create_video_history_graph
 
@@ -27,7 +25,7 @@ def register_callbacks():
 
         children = []
         download_buttons = []
-        visualization = []  # Initialize as a list for consistency
+        visualization = None
         global df  # Use global dataframe to store the uploaded data
 
         for contents, filename_list in zip(all_contents, all_filenames):
@@ -36,7 +34,7 @@ def register_callbacks():
                 content = contents[0] if isinstance(contents, list) else contents
 
                 try:
-                    if 'tiktok' in filename.lower() or filename == 'user_data.json':
+                    if 'tiktok' in filename.lower() or 'user_data.json' in filename.lower():
                         logging.info("Processing TikTok data")
                         df = parse_tiktok_contents(content, ['video_history', 'favorite_video', 'item_favorite'])
                         logging.debug(f"Parsed TikTok DataFrame: {df.head()}")
@@ -47,10 +45,10 @@ def register_callbacks():
                                 "You can download the complete dataset as a CSV file or extract the URLs for further analysis with 4CAT. "
                                 "Additionally, a visualization will show the number of videos watched per month, categorized by source. Enjoy exploring your data!",
                                 style={
-                                    'textAlign': 'center',
-                                    'color': 'black',
+                                    'textAlign': 'justify',
+                                    'color': '#4B5563',
                                     'fontFamily': 'Arial, sans-serif',
-                                    'fontSize': '1em',
+                                    'fontSize': '1.1em',
                                     'lineHeight': '1.6',
                                     'marginTop': '20px',
                                     'marginBottom': '20px'
@@ -65,26 +63,26 @@ def register_callbacks():
                                     style_table={'overflowX': 'auto'},
                                     style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
                                     style_header={
-                                        'backgroundColor': 'rgb(230, 230, 230)',
+                                        'backgroundColor': '#F3F4F6',
                                         'fontWeight': 'bold'
                                     },
                                     style_data_conditional=[
                                         {
                                             'if': {'row_index': 'odd'},
-                                            'backgroundColor': 'rgb(248, 248, 248)'
+                                            'backgroundColor': '#F9FAFB'
                                         }
                                     ]
                                 )
                             ], className='table-container'))
                             download_buttons = [
-                                html.Button("Download CSV", id="btn-download-csv", style={'marginTop': '20px'}),
-                                html.Button("Download URLs for 4CAT", id="btn-download-urls", style={'marginTop': '20px', 'marginLeft': '10px'})
+                                html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
+                                html.Button("Download URLs for 4CAT", id="btn-download-urls", className="download-btn")
                             ]
                             fig = create_video_history_graph(df)
                             logging.debug("Created TikTok visualization figure")
-                            visualization.append(html.Div(dcc.Graph(figure=fig)))  # Wrap the graph in a Div
+                            visualization = dcc.Graph(figure=fig)
                         else:
-                            children.append(html.Div(f"No TikTok data found in the file {filename}."))
+                            children.append(html.Div(f"No TikTok data found in the file {filename}.", className="error-message"))
                     elif any(keyword in filename.lower() for keyword in ['saved_posts', 'liked_posts', 'posts_viewed', 'suggested_accounts_viewed', 'videos_watched']):
                         logging.info("Processing Instagram data")
                         contents_list = contents if isinstance(contents, list) else [contents]
@@ -95,10 +93,10 @@ def register_callbacks():
                                 "Upload successful! 🎉 The table below displays the first rows of your Instagram data. "
                                 "You can download the complete dataset as a CSV file.",
                                 style={
-                                    'textAlign': 'center',
-                                    'color': 'black',
+                                    'textAlign': 'justify',
+                                    'color': '#4B5563',
                                     'fontFamily': 'Arial, sans-serif',
-                                    'fontSize': '1em',
+                                    'fontSize': '1.1em',
                                     'lineHeight': '1.6',
                                     'marginTop': '20px',
                                     'marginBottom': '20px'
@@ -113,34 +111,34 @@ def register_callbacks():
                                     style_table={'overflowX': 'auto'},
                                     style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
                                     style_header={
-                                        'backgroundColor': 'rgb(230, 230, 230)',
+                                        'backgroundColor': '#F3F4F6',
                                         'fontWeight': 'bold'
                                     },
                                     style_data_conditional=[
                                         {
                                             'if': {'row_index': 'odd'},
-                                            'backgroundColor': 'rgb(248, 248, 248)'
+                                            'backgroundColor': '#F9FAFB'
                                         }
                                     ]
                                 )
                             ], className='table-container'))
                             download_buttons = [
-                                html.Button("Download CSV", id="btn-download-csv", style={'marginTop': '20px'}),
+                                html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
                             ]
                             fig = create_engagement_graph(df)
                             logging.debug("Created Instagram visualization figure")
-                            visualization.append(html.Div(dcc.Graph(figure=fig)))  # Wrap the graph in a Div
+                            visualization = dcc.Graph(figure=fig)
                         else:
-                            children.append(html.Div(f"No Instagram data found in the file {filename}."))
+                            children.append(html.Div(f"No Instagram data found in the file {filename}.", className="error-message"))
                 except Exception as e:
                     logging.error(f"Error processing file {filename}: {e}")
                     children.append(html.Div([
                         html.H5(filename),
-                        html.Div(f"An error occurred: {e}", style={'color': 'red'})
+                        html.Div(f"An error occurred: {e}", className="error-message")
                     ]))
 
         logging.info(f"Returning children: {children}, download_buttons: {download_buttons}, visualization: {visualization}")
-        return children, download_buttons, html.Div(visualization)  # Ensure visualization is wrapped in a Div
+        return children, download_buttons, visualization
 
     @app.callback(
         Output('page-content', 'children'),
@@ -149,18 +147,22 @@ def register_callbacks():
     def update_page_content(selected_platform):
         logging.info("update_page_content triggered")
         if selected_platform is None:
-            return html.Div("Please select a platform.")
-        platform_id = f'upload-data-{selected_platform}'
+            return html.Div(" ", className="info-message")
         upload_component = html.Div([
             dcc.Upload(
                 id={'type': 'upload-data', 'platform': selected_platform},
                 children=html.Div(['Drag and Drop or ', html.A('Select Files')]),
                 style={
-                    'width': '100%', 'height': '60px', 'lineHeight': '60px',
-                    'borderWidth': '2px', 'borderStyle': 'dashed',
+                    'width': '100%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '2px',
+                    'borderStyle': 'dashed',
                     'borderRadius': '10px',
                     'textAlign': 'center',
-                    'margin': '10px'
+                    'margin': '10px',
+                    'backgroundColor': '#F9FAFB',
+                    'border': '2px dashed #CBD5E1'
                 },
                 multiple=True
             )
@@ -169,10 +171,10 @@ def register_callbacks():
         description = html.P(
             "You can upload the following files for Instagram: saved_posts.json, liked_posts.json, posts_viewed.json, suggested_accounts_viewed.json, videos_watched.json.",
             style={
-                'textAlign': 'center',
-                'color': 'black',
+                'textAlign': 'justify',
+                'color': '#4B5563',
                 'fontFamily': 'Arial, sans-serif',
-                'fontSize': '1em',
+                'fontSize': '1.1em',
                 'lineHeight': '1.6',
                 'marginTop': '20px',
                 'marginBottom': '20px'
@@ -180,11 +182,9 @@ def register_callbacks():
         ) if selected_platform == 'instagram' else None
 
         return html.Div([
-            html.P(f"Welcome to {selected_platform.capitalize()}!", style={'fontSize': '20px'}),
-            html.P(f"Upload your {selected_platform.capitalize()} data file to get started."),
             upload_component,
             description
-        ])
+        ], className="upload-container")
 
     @app.callback(
         Output('download-dataframe-csv', 'data'),
