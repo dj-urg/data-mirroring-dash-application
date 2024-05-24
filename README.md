@@ -43,7 +43,9 @@ python -m venv venv
   ```
 
 5. Install the required dependencies:
+```
 pip install -r requirements.txt
+```
 
 ### Running the Application
 
