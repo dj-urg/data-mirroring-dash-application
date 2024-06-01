@@ -58,34 +58,23 @@ def extract_urls_for_4cat(df):
     return ','.join(urls)
 
 def create_video_history_graph(df):
-    """
-    Create a bar chart of the number of videos watched per month.
-    
-    :param df: DataFrame containing the TikTok data
-    :return: Plotly Figure
-    """
     df['Date'] = pd.to_datetime(df['Date'])
-    df['Month'] = df['Date'].dt.to_period('M').astype(str)  # Convert Period to string
-    monthly_counts = df.groupby(['Month', 'Source']).size().reset_index(name='Counts')
-
-    fig = px.bar(monthly_counts, x='Month', y='Counts', color='Source', barmode='group',
-                 title='Videos Watched per Month by Source',
-                 labels={'Month': 'Month', 'Counts': 'Number of Videos Watched', 'Source': 'Source'})
-
-    fig.update_layout({
-        'plot_bgcolor': 'white',
-        'paper_bgcolor': 'white',
-        'font': {
-            'color': '#2c3e50',
-            'family': "Arial, Helvetica, sans-serif",
-        },
-        'title': {
-            'x': 0.5,
-            'xanchor': 'center'
-        }
-    })
+    df['Month'] = df['Date'].dt.to_period('M').astype(str)
+    
+    monthly_counts = df.groupby('Month').size().reset_index(name='Counts')
+    
+    fig = px.bar(monthly_counts, x='Month', y='Counts', 
+                 title='Videos Watched per Month',
+                 labels={'Month': 'Month', 'Counts': 'Number of Videos Watched'})
+    
+    fig.update_layout(
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(color='#2c3e50', family="Arial, Helvetica, sans-serif"),
+        title=dict(x=0.5, xanchor='center')
+    )
     
     fig.update_xaxes(showline=True, linewidth=2, linecolor='gray', gridcolor='lightgray')
     fig.update_yaxes(showline=True, linewidth=2, linecolor='gray', gridcolor='lightgray')
-
+    
     return fig

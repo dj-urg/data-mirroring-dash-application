@@ -6,6 +6,7 @@ from app import app
 import pandas as pd
 from src.components.data.insta_processing import parse_json, create_engagement_graph
 from src.components.data.tiktok_processing import parse_tiktok_contents, extract_urls_for_4cat, create_video_history_graph
+from src.components.data.youtube_processing import parse_youtube_contents, create_watch_history_graph
 
 # Global dataframe to store uploaded data
 df = pd.DataFrame()
@@ -26,6 +27,7 @@ def register_callbacks():
         children = []
         download_buttons = []
         visualization = None
+        
         global df  # Use global dataframe to store the uploaded data
 
         for contents, filename_list in zip(all_contents, all_filenames):
@@ -130,6 +132,56 @@ def register_callbacks():
                             visualization = dcc.Graph(figure=fig)
                         else:
                             children.append(html.Div(f"No Instagram data found in the file {filename}.", className="error-message"))
+                    elif filename.lower().endswith('.json') and filename.lower() not in ['user_data.json']:
+                        logging.info("Processing YouTube data")
+                        df = parse_youtube_contents(content, ['watch_history'])
+                        logging.debug(f"Parsed YouTube DataFrame: {df.head()}")
+                        if not df.empty:
+                            description = html.P(
+                                "Upload successful! 🎉 The table below displays the first rows of your YouTube watch history data. "
+                                "It includes the video titles, links, watch dates, channel names, and channel URLs. "
+                                "You can download the complete dataset as a CSV file or extract the video URLs for further analysis with 4CAT. "
+                                "Additionally, a visualization will show the number of videos watched per month. Enjoy exploring your data!",
+                                style={
+                                    'textAlign': 'justify',
+                                    'color': '#4B5563',
+                                    'fontFamily': 'Arial, sans-serif',
+                                    'fontSize': '1.1em',
+                                    'lineHeight': '1.6',
+                                    'marginTop': '20px',
+                                    'marginBottom': '20px'
+                                }
+                            )
+                            children.append(description)
+                            children.append(html.Div([
+                                html.H5(filename),
+                                dash_table.DataTable(
+                                    data=df.head(10).to_dict('records'),  # Show only first 10 rows
+                                    columns=[{'name': i, 'id': i} for i in df.columns],
+                                    style_table={'overflowX': 'auto'},
+                                    style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
+                                    style_header={
+                                        'backgroundColor': '#F3F4F6',
+                                        'fontWeight': 'bold'
+                                    },
+                                    style_data_conditional=[
+                                        {
+                                            'if': {'row_index': 'odd'},
+                                            'backgroundColor': '#F9FAFB'
+                                        }
+                                    ]
+                                )
+                            ], className='table-container'))
+                            download_buttons = [
+                                html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
+                                html.Button("Download URLs for 4CAT", id="btn-download-urls", className="download-btn")
+                            ]
+                            fig = create_watch_history_graph(df)
+                            logging.debug("Created YouTube visualization figure")
+                            visualization = dcc.Graph(figure=fig)
+                            style={'display': 'flex', 'justifyContent': 'center'}
+                        else:
+                            children.append(html.Div(f"No YouTube watch history data found in the file {filename}.", className="error-message"))
                 except Exception as e:
                     logging.error(f"Error processing file {filename}: {e}")
                     children.append(html.Div([
@@ -185,6 +237,19 @@ def register_callbacks():
         elif selected_platform == 'tiktok':
             description = html.P(
                 "You can upload the user_data.json file for TikTok. The application will only extract engagement (browsing, liking, and/or favoriting) with TikTok videos (URLs) and discard any other information.",
+                style={
+                    'textAlign': 'center',
+                    'color': '#4B5563',
+                    'fontFamily': 'Arial, sans-serif',
+                    'fontSize': '1.1em',
+                    'lineHeight': '1.6',
+                    'marginTop': '20px',
+                    'marginBottom': '20px'
+                }
+            )
+        elif selected_platform == 'youtube':
+            description = html.P(
+                "You can upload the watch-history.json file for YouTube. The application will extract your watch history data, including video titles, links, watch dates, channel names, and channel URLs.",
                 style={
                     'textAlign': 'center',
                     'color': '#4B5563',

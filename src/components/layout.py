@@ -59,8 +59,9 @@ def create_layout():
                 dcc.RadioItems(
                     id='platform-selection',
                     options=[
-                        {'label': 'TikTok', 'value': 'tiktok'},
-                        {'label': 'Instagram', 'value': 'instagram'},
+                        {'label': ' TikTok', 'value': 'tiktok'},
+                        {'label': ' Instagram', 'value': 'instagram'},
+                        {'label': ' YouTube', 'value': 'youtube'},
                     ],
                     labelStyle={'display': 'inline-block', 'margin': '10px'},
                     style={
@@ -75,24 +76,30 @@ def create_layout():
 
         html.Div(id='page-content'),
 
-        html.Div(
-            id='output-data-upload',
-            className='table-container',
-            style={
-                'marginTop': '40px',
-                'padding': '30px',
-                'backgroundColor': '#F9FAFB',
-                'borderRadius': '10px',
-                'boxShadow': '0px 0px 10px rgba(0, 0, 0, 0.1)',
-                'maxWidth': '800px',
-                'margin': 'auto',
-                'color': '#1F2937'
-            }
-        ),
-
-        html.Div(id='download-container', style={'textAlign': 'center', 'marginTop': '20px'}),
-        dcc.Download(id="download-dataframe-csv"),
-        dcc.Download(id="download-urls-txt"),
-
-        html.Div(id='visualization-container', style={'marginTop': '40px'})
+        dcc.Loading(
+            id="loading-spinner",
+            type="circle",
+            children=html.Div(
+                [
+                    html.Div(
+                        id='output-data-upload',
+                        className='table-container',
+                        style={
+                            'marginTop': '40px',
+                            'padding': '30px',
+                            'backgroundColor': '#F9FAFB',
+                            'borderRadius': '10px',
+                            'boxShadow': '0px 0px 10px rgba(0, 0, 0, 0.1)',
+                            'maxWidth': '800px',
+                            'margin': 'auto',
+                            'color': '#1F2937'
+                        }
+                    ),
+                    html.Div(id='download-container', style={'textAlign': 'center', 'marginTop': '20px'}),
+                    dcc.Download(id="download-dataframe-csv"),
+                    dcc.Download(id="download-urls-txt"),
+                    html.Div(id='visualization-container', style={'marginTop': '40px'})
+                ]
+            )
+        )
     ], style={'backgroundColor': '#FFFFFF', 'color': '#1F2937', 'padding': '30px'})

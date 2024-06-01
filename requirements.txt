@@ -7,3 +7,4 @@ plotly
 python-i18n[YAML]
 gunicorn
 numpy
+beautifulsoup4
