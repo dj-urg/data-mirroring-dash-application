@@ -50,8 +50,9 @@ pip install -r requirements.txt
 ### Running the Application
 
 1. Run the application:
+'''
 python main.py
-
+'''
 2. Open your web browser and navigate to `http://localhost:8051`.
 
 ## Usage
