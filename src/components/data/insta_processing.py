@@ -2,6 +2,7 @@ import base64
 import json
 import pandas as pd
 import plotly.express as px
+from dash import html, dash_table, dcc
 
 def parse_contents(contents):
     """
@@ -128,3 +129,36 @@ def create_engagement_graph(df):
     })
     
     return fig
+
+def create_description():
+    return html.P(
+        "Upload successful! 🎉 The table below displays the first rows of your Instagram data. "
+        "You can download the complete dataset as a CSV file.",
+        style={
+            'textAlign': 'justify',
+            'color': '#4B5563',
+            'fontFamily': 'Arial, sans-serif',
+            'fontSize': '1.1em',
+            'lineHeight': '1.6',
+            'marginTop': '20px',
+            'marginBottom': '20px'
+        }
+    )
+
+def create_data_table(df):
+    return html.Div([
+        dash_table.DataTable(
+            data=df.head(10).to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns],
+            style_table={'overflowX': 'auto'},
+            style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
+            style_header={'backgroundColor': '#F3F4F6', 'fontWeight': 'bold'},
+            style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': '#F9FAFB'}]
+        )
+    ], className='table-container')
+
+def create_download_buttons():
+    return [html.Button("Download CSV", id="btn-download-csv", className="download-btn")]
+
+def create_visualization(df):
+    return dcc.Graph(figure=create_engagement_graph(df))

@@ -22,11 +22,11 @@ def create_layout():
             id='platform-description',
             children=[
                 html.P([
-                    "Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the University of Brussels. This project aims to facilitate user reflection on social media usage through data visualization. "
-                    "The application transforms Data Download Packages (DDPs) provided by social media platforms like TikTok and Instagram into a more readable format. By processing a subset of the DDP, the application offers users insights into their data while ensuring the removal of sensitive personal information. Data processing occurs in real-time, guaranteeing that personal information is never stored on any server. "
-                    "Data Mirroring is designed to integrate with the 4CAT: Capture and Analysis Toolkit, enhancing the analysis of social media data. For more information about the project, please visit our ",
+                    "Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the Vrije Universiteit Brussel as part of the ", html.A("NUSE-Unit", href="https://smit.research.vub.be/en/research-areas/news-uses-strategies-engagements", target='_blank'), ". This project aims to facilitate user reflection on social media usage through data conversion and visualization. "
+                    "The application transforms Data Download Packages (DDPs) provided by social media platforms like TikTok, Instagram, and YouTube into a more human-readable format. By processing a subset of the DDP, the application offers users insights into their data while ensuring the removal of sensitive personal information. Data processing occurs in real-time, guaranteeing that personal information is never stored on any server. "
+                    "Data extraction within the Data Mirroring application is designed to integrate with the 4CAT: Capture and Analysis Toolkit (Peeters & Hagen, 2022), enhancing the analysis of social media data. For more information about the project, please visit our ",
                     html.A("GitHub repository", href="https://github.com/dj-urg/data-mirroring-overview", target='_blank'),
-                    "."
+                    ". Finally, for a detailed overview on how to use this application, please follow this instruction sheet."
                 ], style={
                     'textAlign': 'justify', 
                     'color': '#4B5563', 

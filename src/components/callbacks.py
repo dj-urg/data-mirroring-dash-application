@@ -1,25 +1,83 @@
 import logging
+import dash
 from dash import Output, Input, State, html, dcc, dash_table
 from dash.dependencies import ALL
 from dash.exceptions import PreventUpdate
 from app import app
 import pandas as pd
-from src.components.data.insta_processing import parse_json, create_engagement_graph
-from src.components.data.tiktok_processing import parse_tiktok_contents, extract_urls_for_4cat, create_video_history_graph
-from src.components.data.youtube_processing import parse_youtube_contents, create_watch_history_graph
+
+from src.components.data.insta_processing import (
+    parse_json, create_engagement_graph,
+    create_description as create_insta_description,
+    create_data_table as create_insta_data_table,
+    create_download_buttons as create_insta_download_buttons,
+    create_visualization as create_insta_visualization
+)
+from src.components.data.tiktok_processing import (
+    parse_tiktok_contents, extract_urls_for_4cat, create_video_history_graph,
+    create_description as create_tiktok_description,
+    create_data_table as create_tiktok_data_table,
+    create_download_buttons as create_tiktok_download_buttons,
+    create_visualization as create_tiktok_visualization
+)
+from src.components.data.youtube_processing import (
+    parse_youtube_contents, create_watch_history_graph,
+    create_description as create_youtube_description,
+    create_data_table as create_youtube_data_table,
+    create_download_buttons as create_youtube_download_buttons,
+    create_visualization as create_youtube_visualization
+)
 
 # Global dataframe to store uploaded data
 df = pd.DataFrame()
 
-def register_callbacks():
+def process_data(contents, platform):
+    if platform == 'tiktok':
+        return parse_tiktok_contents(contents), 'tiktok'
+    elif platform == 'instagram':
+        return parse_json(contents, ['saved_posts.json', 'liked_posts.json', 'posts_viewed.json', 'suggested_accounts_viewed.json', 'videos_watched.json']), 'instagram'
+    elif platform == 'youtube':
+        return parse_youtube_contents(contents), 'youtube'
+    else:
+        raise ValueError("Unsupported platform")
+
+def generate_ui_elements(df, platform):
+    if df.empty:
+        logging.error("DataFrame is empty.")
+        return [html.Div(f"No data found.", className="error-message")], [], None
+
+    if platform == 'tiktok':
+        description = create_tiktok_description()
+        data_table = create_tiktok_data_table(df)
+        download_buttons = create_tiktok_download_buttons()
+        visualization = create_tiktok_visualization(df)
+    elif platform == 'instagram':
+        description = create_insta_description()
+        data_table = create_insta_data_table(df)
+        download_buttons = create_insta_download_buttons()
+        visualization = create_insta_visualization(df)
+    elif platform == 'youtube':
+        description = create_youtube_description()
+        data_table = create_youtube_data_table(df)
+        download_buttons = create_youtube_download_buttons()
+        visualization = create_youtube_visualization(df)
+    else:
+        logging.error("Unsupported platform")
+        return [html.Div(f"Unsupported platform.", className="error-message")], [], None
+
+    logging.info(f"Generated UI elements for platform: {platform}")
+    return [description, data_table], download_buttons, visualization
+
+def register_callbacks(app):
     @app.callback(
         [Output('output-data-upload', 'children'),
          Output('download-container', 'children'),
          Output('visualization-container', 'children')],
         [Input({'type': 'upload-data', 'platform': ALL}, 'contents')],
-        [State({'type': 'upload-data', 'platform': ALL}, 'filename')]
+        [State({'type': 'upload-data', 'platform': ALL}, 'filename'),
+         State('platform-selection', 'value')]
     )
-    def update_output(all_contents, all_filenames):
+    def update_output(all_contents, all_filenames, selected_platform):
         logging.info("update_output triggered")
         if not all_contents:
             raise PreventUpdate
@@ -36,152 +94,12 @@ def register_callbacks():
                 content = contents[0] if isinstance(contents, list) else contents
 
                 try:
-                    if 'tiktok' in filename.lower() or 'user_data.json' in filename.lower():
-                        logging.info("Processing TikTok data")
-                        df = parse_tiktok_contents(content, ['video_history', 'favorite_video', 'item_favorite'])
-                        logging.debug(f"Parsed TikTok DataFrame: {df.head()}")
-                        if not df.empty:
-                            description = html.P(
-                                "Upload successful! 🎉 The table below displays the first rows of your TikTok data. "
-                                "It includes the dates you watched videos, the video URLs, and your engagement (browsing, favoriting, or liking). "
-                                "You can download the complete dataset as a CSV file or extract the URLs for further analysis with 4CAT. "
-                                "Additionally, a visualization will show the number of videos watched per month, categorized by source. Enjoy exploring your data!",
-                                style={
-                                    'textAlign': 'justify',
-                                    'color': '#4B5563',
-                                    'fontFamily': 'Arial, sans-serif',
-                                    'fontSize': '1.1em',
-                                    'lineHeight': '1.6',
-                                    'marginTop': '20px',
-                                    'marginBottom': '20px'
-                                }
-                            )
-                            children.append(description)
-                            children.append(html.Div([
-                                html.H5(filename),
-                                dash_table.DataTable(
-                                    data=df.head(10).to_dict('records'),  # Show only first 10 rows
-                                    columns=[{'name': i, 'id': i} for i in df.columns],
-                                    style_table={'overflowX': 'auto'},
-                                    style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
-                                    style_header={
-                                        'backgroundColor': '#F3F4F6',
-                                        'fontWeight': 'bold'
-                                    },
-                                    style_data_conditional=[
-                                        {
-                                            'if': {'row_index': 'odd'},
-                                            'backgroundColor': '#F9FAFB'
-                                        }
-                                    ]
-                                )
-                            ], className='table-container'))
-                            download_buttons = [
-                                html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
-                                html.Button("Download URLs for 4CAT", id="btn-download-urls", className="download-btn")
-                            ]
-                            fig = create_video_history_graph(df)
-                            logging.debug("Created TikTok visualization figure")
-                            visualization = dcc.Graph(figure=fig)
-                        else:
-                            children.append(html.Div(f"No TikTok data found in the file {filename}.", className="error-message"))
-                    elif any(keyword in filename.lower() for keyword in ['saved_posts', 'liked_posts', 'posts_viewed', 'suggested_accounts_viewed', 'videos_watched']):
-                        logging.info("Processing Instagram data")
-                        contents_list = contents if isinstance(contents, list) else [contents]
-                        df = parse_json(contents_list, ['saved_posts.json', 'liked_posts.json', 'posts_viewed.json', 'suggested_accounts_viewed.json', 'videos_watched.json'])
-                        logging.debug(f"Parsed Instagram DataFrame: {df.head()}")
-                        if not df.empty:
-                            description = html.P(
-                                "Upload successful! 🎉 The table below displays the first rows of your Instagram data. "
-                                "You can download the complete dataset as a CSV file.",
-                                style={
-                                    'textAlign': 'justify',
-                                    'color': '#4B5563',
-                                    'fontFamily': 'Arial, sans-serif',
-                                    'fontSize': '1.1em',
-                                    'lineHeight': '1.6',
-                                    'marginTop': '20px',
-                                    'marginBottom': '20px'
-                                }
-                            )
-                            children.append(description)
-                            children.append(html.Div([
-                                html.H5(filename),
-                                dash_table.DataTable(
-                                    data=df.head(10).to_dict('records'),  # Show only first 10 rows
-                                    columns=[{'name': i, 'id': i} for i in df.columns],
-                                    style_table={'overflowX': 'auto'},
-                                    style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
-                                    style_header={
-                                        'backgroundColor': '#F3F4F6',
-                                        'fontWeight': 'bold'
-                                    },
-                                    style_data_conditional=[
-                                        {
-                                            'if': {'row_index': 'odd'},
-                                            'backgroundColor': '#F9FAFB'
-                                        }
-                                    ]
-                                )
-                            ], className='table-container'))
-                            download_buttons = [
-                                html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
-                            ]
-                            fig = create_engagement_graph(df)
-                            logging.debug("Created Instagram visualization figure")
-                            visualization = dcc.Graph(figure=fig)
-                        else:
-                            children.append(html.Div(f"No Instagram data found in the file {filename}.", className="error-message"))
-                    elif filename.lower().endswith('.json') and filename.lower() not in ['user_data.json']:
-                        logging.info("Processing YouTube data")
-                        df = parse_youtube_contents(content, ['watch_history'])
-                        logging.debug(f"Parsed YouTube DataFrame: {df.head()}")
-                        if not df.empty:
-                            description = html.P(
-                                "Upload successful! 🎉 The table below displays the first rows of your YouTube watch history data. "
-                                "It includes the video titles, links, watch dates, channel names, and channel URLs. "
-                                "You can download the complete dataset as a CSV file or extract the video URLs for further analysis with 4CAT. "
-                                "Additionally, a visualization will show the number of videos watched per month. Enjoy exploring your data!",
-                                style={
-                                    'textAlign': 'justify',
-                                    'color': '#4B5563',
-                                    'fontFamily': 'Arial, sans-serif',
-                                    'fontSize': '1.1em',
-                                    'lineHeight': '1.6',
-                                    'marginTop': '20px',
-                                    'marginBottom': '20px'
-                                }
-                            )
-                            children.append(description)
-                            children.append(html.Div([
-                                html.H5(filename),
-                                dash_table.DataTable(
-                                    data=df.head(10).to_dict('records'),  # Show only first 10 rows
-                                    columns=[{'name': i, 'id': i} for i in df.columns],
-                                    style_table={'overflowX': 'auto'},
-                                    style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
-                                    style_header={
-                                        'backgroundColor': '#F3F4F6',
-                                        'fontWeight': 'bold'
-                                    },
-                                    style_data_conditional=[
-                                        {
-                                            'if': {'row_index': 'odd'},
-                                            'backgroundColor': '#F9FAFB'
-                                        }
-                                    ]
-                                )
-                            ], className='table-container'))
-                            download_buttons = [
-                                html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
-                                html.Button("Download URLs for 4CAT", id="btn-download-urls", className="download-btn")
-                            ]
-                            fig = create_watch_history_graph(df)
-                            logging.debug("Created YouTube visualization figure")
-                            visualization = dcc.Graph(figure=fig)
-                            style={'display': 'flex', 'justifyContent': 'center'}
-                        else:
-                            children.append(html.Div(f"No YouTube watch history data found in the file {filename}.", className="error-message"))
+                    df, platform = process_data(content, selected_platform)
+                    ui_elements = generate_ui_elements(df, platform)
+                    children.extend(ui_elements[0])
+                    download_buttons.extend(ui_elements[1])
+                    if ui_elements[2]:
+                        visualization = ui_elements[2]
                 except Exception as e:
                     logging.error(f"Error processing file {filename}: {e}")
                     children.append(html.Div([
@@ -217,7 +135,7 @@ def register_callbacks():
                     'border': '2px dashed #CBD5E1'
                 },
                 multiple=True
-            )
+            ),
         ])
         
         description = None
@@ -234,7 +152,7 @@ def register_callbacks():
                     'marginBottom': '20px'
                 }
             )
-        elif selected_platform == 'tiktok':
+        elif selected_platform is 'tiktok':
             description = html.P(
                 "You can upload the user_data.json file for TikTok. The application will only extract engagement (browsing, liking, and/or favoriting) with TikTok videos (URLs) and discard any other information.",
                 style={

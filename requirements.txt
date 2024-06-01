@@ -8,3 +8,5 @@ python-i18n[YAML]
 gunicorn
 numpy
 beautifulsoup4
+flake8
+coverage

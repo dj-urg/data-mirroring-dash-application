@@ -2,12 +2,12 @@ import base64
 import json
 import pandas as pd
 import plotly.express as px
+from dash import html, dash_table, dcc
 
-def parse_youtube_contents(contents, selected_sections):
+def parse_youtube_contents(contents):
     """
     Parse the base64 encoded contents to JSON for YouTube data processing and return as DataFrame.
     :param contents: base64 encoded string from uploaded file
-    :param selected_sections: List of strings representing sections to process
     :return: DataFrame containing the processed YouTube data
     """
     content_type, content_string = contents.split(',')
@@ -16,19 +16,17 @@ def parse_youtube_contents(contents, selected_sections):
 
     all_videos = []
 
-    # Extract selected data sections from the uploaded file
-    if 'watch_history' in selected_sections:
-        watch_history = data if isinstance(data, list) else data.get('watch-history', [])
-
-        for video in watch_history:
-            video_details = {
-                'Title': video.get('title', 'No Title'),
-                'Link': video.get('titleUrl', 'No URL'),
-                'Date': pd.to_datetime(video.get('time', 'No Date')),  # Convert timestamp to datetime
-                'Channel Name': video.get('subtitles', [{}])[0].get('name', 'No Channel Name'),
-                'Channel URL': video.get('subtitles', [{}])[0].get('url', 'No Channel URL')
-            }
-            all_videos.append(video_details)
+    # Extract watch history from the uploaded file
+    watch_history = data if isinstance(data, list) else data.get('watch-history', [])
+    for video in watch_history:
+        video_details = {
+            'Title': video.get('title', 'No Title'),
+            'Link': video.get('titleUrl', 'No URL'),
+            'Date': pd.to_datetime(video.get('time', 'No Date')),  # Convert timestamp to datetime
+            'Channel Name': video.get('subtitles', [{}])[0].get('name', 'No Channel Name'),
+            'Channel URL': video.get('subtitles', [{}])[0].get('url', 'No Channel URL')
+        }
+        all_videos.append(video_details)
 
     if all_videos:
         youtube_df = pd.DataFrame(all_videos)
@@ -44,17 +42,6 @@ def extract_urls_for_4cat(df):
     """
     urls = df['Link'].tolist()
     return ','.join(urls)
-
-import plotly.express as px
-import pandas as pd
-
-import plotly.express as px
-import pandas as pd
-
-import plotly.express as px
-import pandas as pd
-
-import plotly.express as px
 
 def create_watch_history_graph(df):
     """
@@ -131,3 +118,41 @@ def create_watch_history_graph(df):
     })
 
     return fig
+
+def create_description():
+    return html.P(
+        "Upload successful! 🎉 The table below displays the first rows of your YouTube watch history data. "
+        "It includes the video titles, links, watch dates, channel names, and channel URLs. "
+        "You can download the complete dataset as a CSV file or extract the video URLs for further analysis with 4CAT. "
+        "Additionally, a visualization will show the number of videos watched per month. Enjoy exploring your data!",
+        style={
+            'textAlign': 'justify',
+            'color': '#4B5563',
+            'fontFamily': 'Arial, sans-serif',
+            'fontSize': '1.1em',
+            'lineHeight': '1.6',
+            'marginTop': '20px',
+            'marginBottom': '20px'
+        }
+    )
+
+def create_data_table(df):
+    return html.Div([
+        dash_table.DataTable(
+            data=df.head(10).to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns],
+            style_table={'overflowX': 'auto'},
+            style_cell={'textAlign': 'left', 'fontFamily': 'Arial, sans-serif', 'padding': '10px'},
+            style_header={'backgroundColor': '#F3F4F6', 'fontWeight': 'bold'},
+            style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': '#F9FAFB'}]
+        )
+    ], className='table-container')
+
+def create_download_buttons():
+    return [
+        html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
+        html.Button("Download URLs for 4CAT", id="btn-download-urls", className="download-btn")
+    ]
+
+def create_visualization(df):
+    return dcc.Graph(figure=create_watch_history_graph(df))
