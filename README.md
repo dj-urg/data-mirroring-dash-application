@@ -62,21 +62,13 @@ python main.py
 2. Upload the relevant DDP files:
 - For TikTok: `user_data.json`
 - For Instagram: `saved_posts.json`, `liked_posts.json`, `posts_viewed.json`, `suggested_accounts_viewed.json`, `videos_watched.json`
+- For YouTube: 'watch-history.json'
 
 3. The application will process the uploaded files and display a preview of the data in a table format.
 
 4. You can download the processed data as a CSV file or extract the URLs for further analysis with 4CAT.
 
 5. The application also provides visualizations based on the processed data, such as the number of videos watched per month (for TikTok) or engagement graphs (for Instagram).
-
-## Project Structure
-
-- `main.py`: The main entry point of the application.
-- `app.py`: Contains the Dash application instance.
-- `src/components/layout.py`: Defines the layout of the application.
-- `src/components/callbacks.py`: Implements the callbacks for user interactions.
-- `src/components/data/insta_processing.py`: Contains functions for processing Instagram DDP files.
-- `src/components/data/tiktok_processing.py`: Contains functions for processing TikTok DDP files.
 
 ## Contributing
 
