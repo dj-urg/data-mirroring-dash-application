@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: python:3.8-slim
+    build: .
     container_name: data_mirroring_dash
     volumes:
       - .:/app
@@ -12,12 +12,3 @@ services:
       - "8051:8051"
     environment:
       - PYTHONUNBUFFERED=1
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8051:8051"
-    depends_on:
-      - app
