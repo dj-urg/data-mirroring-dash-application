@@ -8,6 +8,9 @@ USER appuser
 # Set the working directory in the container
 WORKDIR /app
 
+# Add the local user pip directory to the PATH
+ENV PATH=/home/appuser/.local/bin:$PATH
+
 # Copy the requirements.txt file and install the dependencies
 COPY --chown=appuser:appuser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
