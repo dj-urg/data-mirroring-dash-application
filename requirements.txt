@@ -3,10 +3,9 @@ dash
 dash-bootstrap-components
 pandas
 pandas-stubs
+numpy
 plotly
 python-i18n[YAML]
 gunicorn
-numpy
-beautifulsoup4
-flake8
 coverage
+python-dotenv
