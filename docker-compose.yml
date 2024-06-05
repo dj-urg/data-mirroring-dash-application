@@ -5,7 +5,7 @@ services:
     build: .
     ports:
       - "8051:8051"
-    volumes:
-      - .:/app
     environment:
-      - FLASK_ENV=production
+      - PORT=8051
+      - DEBUG=True
+    command: ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "wsgi:app"]

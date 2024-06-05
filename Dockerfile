@@ -1,20 +1,22 @@
-# Use an official Python runtime as a parent image
+# Use the official Python base image
 FROM python:3.9-slim
 
-# Set the working directory
+# Create a non-root user and switch to it
+RUN useradd -ms /bin/bash appuser
+USER appuser
+
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Install any needed packages specified in requirements.txt
+# Copy the requirements.txt file and install the dependencies
+COPY --chown=appuser:appuser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 8051 available to the world outside this container
+# Copy the rest of the application code into the container
+COPY --chown=appuser:appuser .env .
+
+# Expose the port the app runs on
 EXPOSE 8051
 
-# Define environment variable
-ENV NAME World
-
-# Run wsgi.py when the container launches
+# Command to run the application using Gunicorn
 CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "wsgi:app"]
