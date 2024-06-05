@@ -8,4 +8,4 @@ services:
     environment:
       - PORT=8051
       - DEBUG=True
-    command: ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "wsgi:app"]
+    command: ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "main:application"]
