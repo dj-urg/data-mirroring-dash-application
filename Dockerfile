@@ -1,23 +1,20 @@
-# Use an official Python runtime as a parent image
-# Use an official Python runtime as a parent image
-FROM python:3.8-slim
+# Use the official Python base image
+FROM python:3.9-slim
 
-# Set the working directory
-# Set the working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copy the requirements.txt file into the container
+COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
-# Install any needed packages specified in requirements.txt
+# Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 8051 available to the world outside this container
-# Make port 8051 available to the world outside this container
+# Copy the rest of the application code into the container
+COPY . .
+
+# Expose the port the app runs on
 EXPOSE 8051
 
-# Run Gunicorn to serve the application
-CMD ["gunicorn", "-b", "0.0.0.0:8051", "main:server"]
+# Command to run the application using Gunicorn
+CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "wsgi:app"]
