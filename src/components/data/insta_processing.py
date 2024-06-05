@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 from dash import html, dash_table, dcc
 
-def parse_contents(contents):
+def parse_instagram_contents(contents):
     """
     Parse base64 encoded contents to JSON.
     
@@ -15,13 +15,16 @@ def parse_contents(contents):
     decoded = base64.b64decode(content_string)
     return json.loads(decoded.decode('utf-8'))
 
-def flatten_instagram_data(data):
-    """
-    Flatten JSON data from various Instagram data structures into a list of dictionaries.
+def parse_instagram_contents(contents):
+    # Ensure contents is a single string, if it's a list, get the first element
+    if isinstance(contents, list):
+        contents = contents[0]
     
-    :param data: Parsed JSON content
-    :return: List of dictionaries with flattened data
-    """
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+    return json.loads(decoded.decode('utf-8'))
+
+def flatten_instagram_data(data):
     flat_instagram_data = []
 
     # Process various Instagram data structures
@@ -73,7 +76,7 @@ def flatten_instagram_data(data):
 
     return pd.DataFrame(flat_instagram_data)
 
-def parse_json(contents_list, selected_sections):
+def parse_instagram_files(contents_list, selected_sections):
     """
     Main function to parse the uploaded JSON files and return a merged DataFrame.
     
@@ -83,7 +86,7 @@ def parse_json(contents_list, selected_sections):
     """
     all_data = pd.DataFrame()
     for contents in contents_list:
-        data = parse_contents(contents)
+        data = parse_instagram_contents(contents)
         flat_instagram_data = flatten_instagram_data(data)
         if not flat_instagram_data.empty:
             filtered_data = flat_instagram_data[flat_instagram_data['file_name'].isin(selected_sections)]
@@ -129,21 +132,6 @@ def create_engagement_graph(df):
     })
     
     return fig
-
-def create_description():
-    return html.P(
-        "Upload successful! 🎉 The table below displays the first rows of your Instagram data. "
-        "You can download the complete dataset as a CSV file.",
-        style={
-            'textAlign': 'justify',
-            'color': '#4B5563',
-            'fontFamily': 'Arial, sans-serif',
-            'fontSize': '1.1em',
-            'lineHeight': '1.6',
-            'marginTop': '20px',
-            'marginBottom': '20px'
-        }
-    )
 
 def create_data_table(df):
     return html.Div([

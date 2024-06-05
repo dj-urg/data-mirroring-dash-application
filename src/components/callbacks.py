@@ -3,70 +3,64 @@ import dash
 from dash import Output, Input, State, html, dcc, dash_table
 from dash.dependencies import ALL
 from dash.exceptions import PreventUpdate
-from app import app
 import pandas as pd
-
-from src.components.data.insta_processing import (
-    parse_json, create_engagement_graph,
-    create_description as create_insta_description,
-    create_data_table as create_insta_data_table,
-    create_download_buttons as create_insta_download_buttons,
-    create_visualization as create_insta_visualization
-)
-from src.components.data.tiktok_processing import (
-    parse_tiktok_contents, extract_urls_for_4cat, create_video_history_graph,
-    create_description as create_tiktok_description,
-    create_data_table as create_tiktok_data_table,
-    create_download_buttons as create_tiktok_download_buttons,
-    create_visualization as create_tiktok_visualization
-)
-from src.components.data.youtube_processing import (
-    parse_youtube_contents, create_watch_history_graph,
-    create_description as create_youtube_description,
-    create_data_table as create_youtube_data_table,
-    create_download_buttons as create_youtube_download_buttons,
-    create_visualization as create_youtube_visualization
-)
+from src.components.data.insta_processing import parse_instagram_files, create_engagement_graph
+from src.components.data.tiktok_processing import parse_tiktok_contents, create_video_history_graph, flatten_tiktok_data
+from src.components.data.youtube_processing import parse_youtube_contents, create_watch_history_graph
+from src.components.data.general_utils import create_data_table, create_download_buttons, extract_urls_for_4cat
 
 # Global dataframe to store uploaded data
 df = pd.DataFrame()
 
-def process_data(contents, platform):
+def create_description(platform):
+    descriptions = {
+        'tiktok': "Upload successful! 🎉 The table below displays the first rows of your TikTok data. "
+                  "It includes the dates you watched videos, the video URLs, and your engagement (browsing, favoriting, or liking). "
+                  "You can download the complete dataset as a CSV file or extract the URLs for further analysis with 4CAT. "
+                  "Additionally, a visualization will show the number of videos watched per month, categorized by source. Enjoy exploring your data!",
+        'instagram': "Upload successful! 🎉 The table below displays the first rows of your Instagram data. "
+                     "You can download the complete dataset as a CSV file.",
+        'youtube': "Upload successful! 🎉 The table below displays the first rows of your YouTube watch history data. "
+                   "It includes the video titles, links, watch dates, channel names, and channel URLs. "
+                   "You can download the complete dataset as a CSV file or extract the video URLs for further analysis with 4CAT. "
+                   "Additionally, a visualization will show the number of videos watched per month. Enjoy exploring your data!"
+    }
+    return html.P(descriptions[platform], style={
+        'textAlign': 'justify',
+        'color': '#4B5563',
+        'fontFamily': 'Arial, sans-serif',
+        'fontSize': '1.1em',
+        'lineHeight': '1.6',
+        'marginTop': '20px',
+        'marginBottom': '20px'
+    })
+
+def create_visualization(platform, df):
     if platform == 'tiktok':
-        return parse_tiktok_contents(contents), 'tiktok'
+        fig = create_video_history_graph(df)
     elif platform == 'instagram':
-        return parse_json(contents, ['saved_posts.json', 'liked_posts.json', 'posts_viewed.json', 'suggested_accounts_viewed.json', 'videos_watched.json']), 'instagram'
+        fig = create_engagement_graph(df)
     elif platform == 'youtube':
-        return parse_youtube_contents(contents), 'youtube'
-    else:
-        raise ValueError("Unsupported platform")
+        fig = create_watch_history_graph(df)
+    return dcc.Graph(figure=fig)
 
-def generate_ui_elements(df, platform):
-    if df.empty:
-        logging.error("DataFrame is empty.")
-        return [html.Div(f"No data found.", className="error-message")], [], None
-
+def parse_contents(platform, contents_list, selected_sections=None):
+    logging.debug(f"Parsing contents for platform: {platform} with selected sections: {selected_sections}")
     if platform == 'tiktok':
-        description = create_tiktok_description()
-        data_table = create_tiktok_data_table(df)
-        download_buttons = create_tiktok_download_buttons()
-        visualization = create_tiktok_visualization(df)
+        if not selected_sections:
+            selected_sections = ['video_history', 'favorite_video', 'item_favorite']
+        content = contents_list[0]
+        logging.debug(f"Contents: {content[:200]}")  # Log first 200 characters of contents
+        parsed_data = parse_tiktok_contents(content)
+        logging.debug(f"Parsed TikTok Data: {parsed_data}")
+        return flatten_tiktok_data(parsed_data, selected_sections)
     elif platform == 'instagram':
-        description = create_insta_description()
-        data_table = create_insta_data_table(df)
-        download_buttons = create_insta_download_buttons()
-        visualization = create_insta_visualization(df)
+        if selected_sections is None:
+            selected_sections = ['saved_posts.json', 'liked_posts.json', 'posts_viewed.json', 'suggested_accounts_viewed.json', 'videos_watched.json']
+        return parse_instagram_files(contents_list, selected_sections)
     elif platform == 'youtube':
-        description = create_youtube_description()
-        data_table = create_youtube_data_table(df)
-        download_buttons = create_youtube_download_buttons()
-        visualization = create_youtube_visualization(df)
-    else:
-        logging.error("Unsupported platform")
-        return [html.Div(f"Unsupported platform.", className="error-message")], [], None
-
-    logging.info(f"Generated UI elements for platform: {platform}")
-    return [description, data_table], download_buttons, visualization
+        return parse_youtube_contents(contents_list[0])
+    return pd.DataFrame()
 
 def register_callbacks(app):
     @app.callback(
@@ -75,9 +69,9 @@ def register_callbacks(app):
          Output('visualization-container', 'children')],
         [Input({'type': 'upload-data', 'platform': ALL}, 'contents')],
         [State({'type': 'upload-data', 'platform': ALL}, 'filename'),
-         State('platform-selection', 'value')]
+         State({'type': 'upload-data', 'platform': ALL}, 'id')]
     )
-    def update_output(all_contents, all_filenames, selected_platform):
+    def update_output(all_contents, all_filenames, all_ids):
         logging.info("update_output triggered")
         if not all_contents:
             raise PreventUpdate
@@ -85,25 +79,27 @@ def register_callbacks(app):
         children = []
         download_buttons = []
         visualization = None
-        
+
         global df  # Use global dataframe to store the uploaded data
 
-        for contents, filename_list in zip(all_contents, all_filenames):
+        for contents, filename_list, id in zip(all_contents, all_filenames, all_ids):
             if contents and filename_list:
-                filename = filename_list[0]  # Assuming one file per upload component
-                content = contents[0] if isinstance(contents, list) else contents
+                platform = id['platform']  # Extract platform from the id
 
                 try:
-                    df, platform = process_data(content, selected_platform)
-                    ui_elements = generate_ui_elements(df, platform)
-                    children.extend(ui_elements[0])
-                    download_buttons.extend(ui_elements[1])
-                    if ui_elements[2]:
-                        visualization = ui_elements[2]
+                    df = parse_contents(platform, [contents])
+                    logging.debug(f"Parsed {platform.capitalize()} DataFrame: {df.head()}")
+                    if not df.empty:
+                        children.append(create_description(platform))
+                        children.append(create_data_table(df))
+                        download_buttons = create_download_buttons(platform)
+                        visualization = create_visualization(platform, df)
+                    else:
+                        children.append(html.Div(f"No {platform.capitalize()} data found in the files.", className="error-message"))
                 except Exception as e:
-                    logging.error(f"Error processing file {filename}: {e}")
+                    logging.error(f"Error processing files {filename_list}: {e}")
                     children.append(html.Div([
-                        html.H5(filename),
+                        html.H5(', '.join(filename_list)),
                         html.Div(f"An error occurred: {e}", className="error-message")
                     ]))
 
@@ -135,49 +131,24 @@ def register_callbacks(app):
                     'border': '2px dashed #CBD5E1'
                 },
                 multiple=True
-            ),
+            )
         ])
-        
-        description = None
-        if selected_platform == 'instagram':
-            description = html.P(
-                "You can upload the following files for Instagram: saved_posts.json, liked_posts.json, posts_viewed.json, suggested_accounts_viewed.json, videos_watched.json. You can upload one file or select multiple files at the same time.",
-                style={
-                    'textAlign': 'center',
-                    'color': '#4B5563',
-                    'fontFamily': 'Arial, sans-serif',
-                    'fontSize': '1.1em',
-                    'lineHeight': '1.6',
-                    'marginTop': '20px',
-                    'marginBottom': '20px'
-                }
-            )
-        elif selected_platform is 'tiktok':
-            description = html.P(
-                "You can upload the user_data.json file for TikTok. The application will only extract engagement (browsing, liking, and/or favoriting) with TikTok videos (URLs) and discard any other information.",
-                style={
-                    'textAlign': 'center',
-                    'color': '#4B5563',
-                    'fontFamily': 'Arial, sans-serif',
-                    'fontSize': '1.1em',
-                    'lineHeight': '1.6',
-                    'marginTop': '20px',
-                    'marginBottom': '20px'
-                }
-            )
-        elif selected_platform == 'youtube':
-            description = html.P(
-                "You can upload the watch-history.json file for YouTube. The application will extract your watch history data, including video titles, links, watch dates, channel names, and channel URLs.",
-                style={
-                    'textAlign': 'center',
-                    'color': '#4B5563',
-                    'fontFamily': 'Arial, sans-serif',
-                    'fontSize': '1.1em',
-                    'lineHeight': '1.6',
-                    'marginTop': '20px',
-                    'marginBottom': '20px'
-                }
-            )
+
+        descriptions = {
+            'instagram': "You can upload the following files for Instagram: saved_posts.json, liked_posts.json, posts_viewed.json, suggested_accounts_viewed.json, videos_watched.json. You can upload one file or select multiple files at the same time.",
+            'tiktok': "You can upload the user_data.json file for TikTok. The application will only extract engagement (browsing, liking, and/or favoriting) with TikTok videos (URLs) and discard any other information.",
+            'youtube': "You can upload the watch-history.json file for YouTube. The application will extract your watch history data, including video titles, links, watch dates, channel names, and channel URLs."
+        }
+
+        description = html.P(descriptions[selected_platform], style={
+            'textAlign': 'center',
+            'color': '#4B5563',
+            'fontFamily': 'Arial, sans-serif',
+            'fontSize': '1.1em',
+            'lineHeight': '1.6',
+            'marginTop': '20px',
+            'marginBottom': '20px'
+        })
 
         return html.Div([
             upload_component,

@@ -5,11 +5,10 @@ import plotly.express as px
 from dash import html, dash_table, dcc
 
 def parse_youtube_contents(contents):
-    """
-    Parse the base64 encoded contents to JSON for YouTube data processing and return as DataFrame.
-    :param contents: base64 encoded string from uploaded file
-    :return: DataFrame containing the processed YouTube data
-    """
+    # Ensure contents is a single string, if it's a list, get the first element
+    if isinstance(contents, list):
+        contents = contents[0]
+        
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     data = json.loads(decoded.decode('utf-8'))  # Decode to string before JSON parsing

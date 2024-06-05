@@ -1,3 +1,4 @@
+import logging
 import base64
 import json
 import pandas as pd
@@ -5,91 +6,63 @@ import plotly.express as px
 from dash import html, dash_table, dcc
 
 def parse_tiktok_contents(contents):
-    """
-    Parse the base64 encoded contents to JSON for TikTok data processing and return as DataFrame.
+    # Ensure contents is a single string, if it's a list, get the first element
+    if isinstance(contents, list):
+        contents = contents[0]
     
-    :param contents: base64 encoded string from uploaded file
-    :return: DataFrame containing the processed TikTok data
-    """
-    content_type, content_string = contents.split(',')
+    _, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
-    data = json.loads(decoded.decode('utf-8'))  # Decode to string before JSON parsing
-    
-    all_videos = []
-    # Extract data sections from the uploaded file
-    video_history = data.get('Activity', {}).get('Video Browsing History', {}).get('VideoList', [])
-    for video in video_history:
-        video['Source'] = 'Browsing'
-    all_videos.extend(video_history)
-    
-    favorite_video_history = data.get('Activity', {}).get('Favorite Videos', {}).get('FavoriteVideoList', [])
-    if not favorite_video_history:
-        favorite_video_history = data.get('Activity', {}).get('Favorite', {}).get('FavoriteVideoList', [])
-    for video in favorite_video_history:
-        video['Source'] = 'Favorite'
-    all_videos.extend(favorite_video_history)
-    
-    item_favorite_list = data.get('Activity', {}).get('Like List', {}).get('ItemFavoriteList', [])
-    if not item_favorite_list:
-        item_favorite_list = data.get('Activity', {}).get('Liked', {}).get('ItemFavoriteList', [])
-    for video in item_favorite_list:
-        video['Source'] = 'Liked'
-    all_videos.extend(item_favorite_list)
-    
-    if all_videos:
-        tiktok_df = pd.DataFrame(all_videos)
-        return tiktok_df
+    parsed_data = json.loads(decoded.decode('utf-8'))
+    logging.debug(f"Parsed TikTok Data Keys: {parsed_data.keys()}")
+    return parsed_data
+
+def flatten_tiktok_data(data, selected_sections):
+    logging.debug(f"Flattening TikTok data for sections: {selected_sections}")
+    flat_tiktok_data = []
+
+    if 'video_history' in selected_sections:
+        video_history = data.get('Activity', {}).get('Video Browsing History', {}).get('VideoList', [])
+        for video in video_history:
+            video['Source'] = 'Browsing'
+        flat_tiktok_data.extend(video_history)
+
+    if 'favorite_video' in selected_sections:
+        favorite_video_history = data.get('Activity', {}).get('Favorite Videos', {}).get('FavoriteVideoList', [])
+        if not favorite_video_history:
+            favorite_video_history = data.get('Activity', {}).get('Favorite', {}).get('FavoriteVideoList', [])
+        for video in favorite_video_history:
+            video['Source'] = 'Favorite'
+        flat_tiktok_data.extend(favorite_video_history)
+
+    if 'item_favorite' in selected_sections:
+        item_favorite_list = data.get('Activity', {}).get('Like List', {}).get('ItemFavoriteList', [])
+        if not item_favorite_list:
+            item_favorite_list = data.get('Activity', {}).get('Liked', {}).get('ItemFavoriteList', [])
+        for video in item_favorite_list:
+            video['Source'] = 'Liked'
+        flat_tiktok_data.extend(item_favorite_list)
+
+    if flat_tiktok_data:
+        return pd.DataFrame(flat_tiktok_data)
     else:
         raise ValueError("No relevant data found in the selected sections.")
-
-def extract_urls_for_4cat(df):
-    """
-    Extract URLs from the DataFrame for further analysis with 4CAT.
     
-    :param df: DataFrame containing the TikTok data
-    :return: String with URLs separated by commas
-    """
-    urls = df['Link'].tolist()
-    return ','.join(urls)
-
 def create_video_history_graph(df):
     df['Date'] = pd.to_datetime(df['Date'])
-    df['Month'] = df['Date'].dt.to_period('M').astype(str)
-    
-    monthly_counts = df.groupby('Month').size().reset_index(name='Counts')
-    
-    fig = px.bar(monthly_counts, x='Month', y='Counts', 
-                 title='Videos Watched per Month',
-                 labels={'Month': 'Month', 'Counts': 'Number of Videos Watched'})
-    
-    fig.update_layout(
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        font=dict(color='#2c3e50', family="Arial, Helvetica, sans-serif"),
-        title=dict(x=0.5, xanchor='center')
-    )
-    
+    category_counts_per_date = df.groupby([df['Date'].dt.to_period('M'), 'Source']).size().unstack(fill_value=0)
+    category_counts_per_date = category_counts_per_date.reset_index()
+    category_counts_per_date['Date'] = category_counts_per_date['Date'].astype(str)
+    fig = px.bar(category_counts_per_date, x='Date', y=['Browsing', 'Favorite', 'Liked'], 
+                 title="Watched Videos per Month", labels={'value': 'Number of Videos', 'variable': 'Source'}, barmode='stack')
+    fig.update_layout({
+        'plot_bgcolor': 'white',
+        'paper_bgcolor': 'white',
+        'font': {'color': '#2c3e50', 'family': "Arial, Helvetica, sans-serif"},
+        'title': {'x': 0.5, 'xanchor': 'center'}
+    })
     fig.update_xaxes(showline=True, linewidth=2, linecolor='gray', gridcolor='lightgray')
     fig.update_yaxes(showline=True, linewidth=2, linecolor='gray', gridcolor='lightgray')
-    
     return fig
-
-def create_description():
-    return html.P(
-        "Upload successful! 🎉 The table below displays the first rows of your TikTok data. "
-        "It includes the dates you watched videos, the video URLs, and your engagement (browsing, favoriting, or liking). "
-        "You can download the complete dataset as a CSV file or extract the URLs for further analysis with 4CAT. "
-        "Additionally, a visualization will show the number of videos watched per month, categorized by source. Enjoy exploring your data!",
-        style={
-            'textAlign': 'justify',
-            'color': '#4B5563',
-            'fontFamily': 'Arial, sans-serif',
-            'fontSize': '1.1em',
-            'lineHeight': '1.6',
-            'marginTop': '20px',
-            'marginBottom': '20px'
-        }
-    )
 
 def create_data_table(df):
     return html.Div([
@@ -102,12 +75,6 @@ def create_data_table(df):
             style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': '#F9FAFB'}]
         )
     ], className='table-container')
-
-def create_download_buttons():
-    return [
-        html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
-        html.Button("Download URLs for 4CAT", id="btn-download-urls", className="download-btn")
-    ]
 
 def create_visualization(df):
     return dcc.Graph(figure=create_video_history_graph(df))

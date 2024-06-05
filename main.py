@@ -4,7 +4,8 @@ from app import app, server
 from src.components.layout import create_layout
 from src.components.callbacks import register_callbacks
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 def setup_app():
     """
