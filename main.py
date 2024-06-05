@@ -41,3 +41,6 @@ def run_server():
 if __name__ == "__main__":
     setup_app()
     run_server()
+
+setup_app()
+application = server

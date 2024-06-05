@@ -19,4 +19,4 @@ COPY --chown=appuser:appuser . .
 EXPOSE 8051
 
 # Command to run the application using Gunicorn
-CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "wsgi:app"]
+CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "main:application"]
