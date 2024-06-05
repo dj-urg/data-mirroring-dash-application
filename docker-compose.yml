@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: data_mirroring_dash
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: bash -c "pip install -r requirements.txt && python main.py"
+    ports:
+      - "8051:8051"
+    environment:
+      - PYTHONUNBUFFERED=1
