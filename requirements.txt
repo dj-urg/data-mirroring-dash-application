@@ -6,6 +6,6 @@ pandas-stubs
 numpy
 plotly
 python-i18n[YAML]
-gunicorn
+gunicorn==20.1.0
 coverage
 python-dotenv
