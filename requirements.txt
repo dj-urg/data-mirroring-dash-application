@@ -9,3 +9,4 @@ python-i18n[YAML]
 gunicorn==20.1.0
 coverage
 python-dotenv
+flask
