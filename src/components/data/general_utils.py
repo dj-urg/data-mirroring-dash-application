@@ -27,3 +27,4 @@ def extract_urls_for_4cat(df):
     """
     urls = df['Link'].tolist()
     return ','.join(urls)
+

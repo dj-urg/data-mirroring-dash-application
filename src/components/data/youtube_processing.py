@@ -33,15 +33,6 @@ def parse_youtube_contents(contents):
     else:
         raise ValueError("No relevant data found in the selected sections.")
 
-def extract_urls_for_4cat(df):
-    """
-    Extract URLs from the DataFrame for further analysis with 4CAT.
-    :param df: DataFrame containing the YouTube data
-    :return: String with URLs separated by commas
-    """
-    urls = df['Link'].tolist()
-    return ','.join(urls)
-
 def create_watch_history_graph(df):
     """
     Create a visually appealing and insightful bar chart of the most watched channels per year.
@@ -146,12 +137,6 @@ def create_data_table(df):
             style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': '#F9FAFB'}]
         )
     ], className='table-container')
-
-def create_download_buttons():
-    return [
-        html.Button("Download CSV", id="btn-download-csv", className="download-btn"),
-        html.Button("Download URLs for 4CAT", id="btn-download-urls", className="download-btn")
-    ]
 
 def create_visualization(df):
     return dcc.Graph(figure=create_watch_history_graph(df))
