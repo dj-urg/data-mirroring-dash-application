@@ -57,7 +57,7 @@ python main.py
 
 ## Usage
 
-1. Select the social media platform (TikTok or Instagram) from which you have downloaded your DDP.
+1. Select the social media platform (TikTok, Instagram, or YouTube) from which you have downloaded your DDP.
 
 2. Upload the relevant DDP files:
 - For TikTok: `user_data.json`
@@ -68,7 +68,7 @@ python main.py
 
 4. You can download the processed data as a CSV file or extract the URLs for further analysis with 4CAT.
 
-5. The application also provides visualizations based on the processed data, such as the number of videos watched per month (for TikTok) or engagement graphs (for Instagram).
+5. The application also provides visualizations based on the processed data, such as the number of videos watched per month (for TikTok) or engagement graphs (for Instagram and YouTube).
 
 ## Contributing
 
