@@ -4,7 +4,7 @@ Welcome to the Data Mirroring research project Dash application. This tool trans
 
 ## Live Demo
 
-The Data Mirroring application is currently deployed on Heroku. You can access the live demo [here](https://data-mirroring-b65b623911e5.herokuapp.com/).
+The Data Mirroring application is currently deployed on Heroku. You can access the live demo [here](https://data-mirroring-b65b623911e5.herokuapp.com/) (deactivated).
 
 ## Getting Started
 
