@@ -3,6 +3,7 @@ import logging
 from dotenv import load_dotenv
 from flask import Flask, request, redirect, url_for, session, render_template_string
 from dash import Dash
+from flask_talisman import Talisman
 from src.components.layout import create_layout
 from src.components.callbacks import register_callbacks
 
@@ -18,6 +19,9 @@ logging.basicConfig(level=logging.DEBUG,
 
 server = Flask(__name__)
 server.secret_key = os.urandom(24)
+
+# Apply Talisman for HTTPS enforcement and other security headers
+Talisman(server, force_https=True)
 
 app = Dash(__name__, server=server, url_base_pathname='/app/')
 app.config.suppress_callback_exceptions = True
