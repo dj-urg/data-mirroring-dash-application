@@ -17,7 +17,7 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't']
 PORT = int(os.getenv('PORT', 8051))
 ACCESS_CODE = os.getenv('ACCESS_CODE')
 
-logging.basicConfig(level=logging.DEBUG, 
+logging.basicConfig(level=logging.WARNING, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 server = Flask(__name__)
