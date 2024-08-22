@@ -8,6 +8,7 @@ from src.components.data.insta_processing import parse_instagram_files, create_e
 from src.components.data.tiktok_processing import parse_tiktok_contents, create_video_history_graph, flatten_tiktok_data
 from src.components.data.youtube_processing import parse_youtube_contents, create_watch_history_graph
 from src.components.data.general_utils import create_data_table, create_download_buttons, extract_urls_for_4cat
+from src.components.utils.security_utils import save_temp_file, cleanup_temp_file
 
 # Global dataframe to store uploaded data
 df = pd.DataFrame()
@@ -46,20 +47,31 @@ def create_visualization(platform, df):
 
 def parse_contents(platform, contents_list, selected_sections=None):
     logging.debug(f"Parsing contents for platform: {platform} with selected sections: {selected_sections}")
-    if platform == 'tiktok':
-        if not selected_sections:
-            selected_sections = ['video_history', 'favorite_video', 'item_favorite']
-        content = contents_list[0]
-        logging.debug(f"Contents: {content[:200]}")  # Log first 200 characters of contents
-        parsed_data = parse_tiktok_contents(content)
-        logging.debug(f"Parsed TikTok Data: {parsed_data}")
-        return flatten_tiktok_data(parsed_data, selected_sections)
-    elif platform == 'instagram':
-        if selected_sections is None:
-            selected_sections = ['saved_posts.json', 'liked_posts.json', 'posts_viewed.json', 'suggested_accounts_viewed.json', 'videos_watched.json']
-        return parse_instagram_files(contents_list, selected_sections)
-    elif platform == 'youtube':
-        return parse_youtube_contents(contents_list[0])
+    
+    temp_files = []
+    try:
+        for content in contents_list:
+            filename = f"{platform}_data.json"
+            temp_file_path = save_temp_file(content.encode('utf-8'), filename)
+            temp_files.append(temp_file_path)
+            
+            if platform == 'tiktok':
+                if not selected_sections:
+                    selected_sections = ['video_history', 'favorite_video', 'item_favorite']
+                parsed_data = parse_tiktok_contents(temp_file_path)
+                return flatten_tiktok_data(parsed_data, selected_sections)
+            elif platform == 'instagram':
+                if selected_sections is None:
+                    selected_sections = ['saved_posts.json', 'liked_posts.json', 'posts_viewed.json', 'suggested_accounts_viewed.json', 'videos_watched.json']
+                return parse_instagram_files([temp_file_path], selected_sections)
+            elif platform == 'youtube':
+                return parse_youtube_contents(temp_file_path)
+            else:
+                raise ValueError("Unsupported platform")
+    finally:
+        for temp_file in temp_files:
+            cleanup_temp_file(temp_file)
+
     return pd.DataFrame()
 
 def register_callbacks(app):
@@ -107,8 +119,9 @@ def register_callbacks(app):
         return children, download_buttons, visualization
 
     @app.callback(
-        Output('page-content', 'children'),
-        Input('platform-selection', 'value')
+        Output('download-dataframe-csv', 'data'),
+        Input('btn-download-csv', 'n_clicks'),
+        prevent_initial_call=True
     )
     def update_page_content(selected_platform):
         logging.info("update_page_content triggered")
