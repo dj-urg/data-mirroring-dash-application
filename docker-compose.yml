@@ -7,5 +7,14 @@ services:
       - "8051:8051"
     environment:
       - PORT=8051
-      - DEBUG=True
-    command: ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8051", "main:application"]
+      - DEBUG=False  # Ensure DEBUG is False in production
+      - SECRET_KEY=${SECRET_KEY}  # Secure environment variable for Flask secret key
+      - ACCESS_CODE=${ACCESS_CODE}  # Secure environment variable for access code
+    command: ["gunicorn", "--workers", "3", "--timeout", "120", "--bind", "0.0.0.0:8051", "main:application"]
+    restart: always  # Ensure the container restarts automatically on failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8051"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    user: "appuser"  # Run the container as a non-root user
