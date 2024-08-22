@@ -12,6 +12,7 @@ services:
       - ACCESS_CODE=${ACCESS_CODE}  # Secure environment variable for access code
     command: ["gunicorn", "--workers", "3", "--timeout", "120", "--bind", "0.0.0.0:8051", "main:application"]
     restart: always  # Ensure the container restarts automatically on failure
+    tmpfs: /app/tmp  # Use a tmpfs mount for temporary data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8051"]
       interval: 30s
