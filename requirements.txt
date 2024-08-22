@@ -11,4 +11,4 @@ coverage
 python-dotenv
 flask
 flask-talisman
-from flask_limiter
+flask_limiter
